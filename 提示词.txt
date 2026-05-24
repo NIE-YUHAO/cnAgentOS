@@ -1,0 +1,188 @@
+app.md 该文件为当前项目的目录结构和已有文件存放位置情况及作用。你需要先学习该项目已经存在的架构（tornado:MVC+B/s）及已经实现的功能（实现：登录功能并验证通过），当前项目的技术栈为  
+python3.11+sqlite3+tornado=6.5.5 + html5+css+js。通过学习熟悉框架及已经有代码，为后续开发完善系统（AI智能瞭望与智能问数系统）做准备，本次学习需要生成readme.md文档，用于后续指导完成开发使用，越详细越好。本次学习不能动任何代码和文件及层级。学习完成后，我会根据readme.md中的内容，确认是否开始按需求完成开发任务。
+
+
+requirements.md 该文档主要是开发需求文档，通过该文档你需要记录并跟踪开发需求，这里面包含业务功能需求和非业务功能需求,由人类和你共同维护。你可以在该文档中新增和优化内容，结合@day4/cnAgentOS/README.md 共同完成项目开发。
+技术栈新增以下组件，并提供本地文件供你开发时解压文件后使用
+- layui 2.13.6 (帮助文档: https://layui.dev/docs/2/)
+- bootstrap-5.3.8-dist
+- fontawesome-free-5.15.4-web
+以上三个组件的压缩包已经放置于：\app\static\dist\目录下，你需要解压后才能使用，后续开发使用时，一定需要本地化以上组件，不要引用互联网资源。
+
+----------------------database不提交
+-----------------------出错时：发现问题，检查代码，修复问题
+
+
+当前已经具备开发业务功能模块的条件，我将接下来的任务中，给你具的开发任务的提示和要求，准备好后，回复：Ok
+
+任务一：
+完成后端-管理侧功能模块的开发
+- 后台登录页：采用响应式、沉浸式、自适应设计模式，界面风格以企业化管理软件风格为主，简约专业（后台登录页为管理员admin专员：默认登录用户名为：admin/admin888）
+- 后台主页：预留页面，后期开发完成所有模块后再实现，本次任务不涉及代码。
+- 用户管理：实现用户新增/删除/批量删除/修改/分页（20条）等功能。
+
+完成后台管理框架的前端界面开发
+- 通过layui开发后台经典管理界面，左侧为菜单/右侧为工作区。
+- 其他组件根据任务需求自行完善补充。
+
+
+任务二：
+继续后端-管理侧功能模块的开发
+- 功能管理：将菜单侧功能化，实现动态管理所有功能模块
+- 权限管理：功能与角色的映射关系模块，允许新增/修改/删除权限，采用二级联动的方式实现。
+- 角色管理：默认超级管理员角色（不能修改和删除），允许新增角色，采用二级联动的方式实现。
+
+开发限制：
+- 遵循前置任务开发成果及要求完成功能模块的实现，保证开发的一致性。
+
+任务三：
+继续后端-管理侧功能模块的开发
+- 用户管理优化：需要增加角色设置，其中admin用户为默认系统用户，角色为超级管理员，该用户不能修改和删除，只能改密码。
+- 用户管理列表：增加列显示角色信息
+
+开发限制：
+- 遵循前置任务开发成果及要求完成功能模块的实现，保证开发的一致性。
+
+任务四：
+继续后端-管理侧功能模块的开发
+-- 模型引擎：
+-- 实现以橱窗列表的页面风格，
+-- 实现动态新增/修改/删除模型服务，
+-- 支持可视化配置满足openai-api范式的模型接入及接口调用服务，
+-- 支持模型token统计（可视化），支持分页一行3列，6条数据为一列，由于设计到AI大模型，风格可以炫酷、高级感强，
+-- 支持对新增的模型进行对话测试功能，
+-- 支持设置模型为系统模式（如果为默认，则全局优先调用该模型）
+-- 模型响应支持SSE（流式响应）
+
+以下为模型服务代码示例：
+```
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="YOUR_API_KEY",
+    base_url="https://aigc-api.aitoolcore.com/api/v1"
+)
+
+response = client.chat.completions.create(
+    model="deepseek-v3",
+    messages=[{"role": "user", "content": "你好"}]
+)
+
+print(response.choices[0].message.content)
+```
+以下为APIkey:
+apiKey=sk-aigc-ccc9d8b95e5673fec23272d26b73ca940002520f
+
+任务五：
+继续后端-管理侧功能模块的开发
+-- 瞭望管理:这是一个通过大模型+AI实现的智能数据采集模块，支持新增瞭望数据源管理和采集功能，以下为具体功能需求或要求:
+-- 瞭望数据源管理:该功能是一个动态可视化规则配置功能，支持新增/删除/修改采集源的规则，我这里给你提供一个采集源，你通过分析实现动态管理，如下：
+```
+百度新闻采集源：
+1、采集入口URL：https://www.baidu.com/s?rtt=1&bsst=1&cl=2&tn=news&rsv_dl=ns_pc&word={关键字}
+2、采集requestheader：
+GET /s?rtt=1&bsst=1&cl=2&tn=news&rsv_dl=ns_pc&word=%E5%9B%9B%E5%B7%9D%E5%86%9C%E4%B8%9A%E5%A4%A7%E5%AD%A6 HTTP/1.1
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: zh-CN,zh;q=0.9
+Connection: keep-alive
+Cookie: PSTM=1773148957; BD_UPN=12314753; BIDUPSID=32BC0DB9E070569380FA8E2CA2546886; BDUSS=EtTUluUXlNVmo1TGJRN094allxdnFna25BSHdycnVFaEp6a2FOZHI5cUJIUGRwSVFBQUFBJCQAAAAAAAAAAAEAAAAaRjnixP7PpsuvwcvCvfaq5ucAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIGPz2mBj89pTn; BDUSS_BFESS=EtTUluUXlNVmo1TGJRN094allxdnFna25BSHdycnVFaEp6a2FOZHI5cUJIUGRwSVFBQUFBJCQAAAAAAAAAAAEAAAAaRjnixP7PpsuvwcvCvfaq5ucAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIGPz2mBj89pTn; BAIDUID=F1DBD00F808070A6D11BCE0F3E4EBE07:FG=1; PAD_BROWSER=1; ZFY=2XgR:BjwDJaGwxMiR1ICOgqunLv3wzKufBbtZZd:Bn1XE:C; BAIDUID_REF=F1DBD00F808070A6D11BCE0F3E4EBE07:FG=1; POLYFILL=0; H_WISE_SIDS_BFESS=63148_67861_68166_68737_69006_69168_69192_69193_69244_69229_69241_69235_69295_69372_69419_69415_69414_69423_69446_69429_69456_69592_69616_69678_69755_69717_69766_69796_69779_69708_69834_69844_69917_69961_69808_70013_70048_70022_70097_70036_70058_70056_70117_70149_70124_70158_70163_70230; SMARTINPUT=%5Bobject%20Object%5D; COOKIE_SESSION=442240_2_5_6_1_5_0_0_4_3_0_1_0_0_0_0_1776132920_1776079815_1779276291%7C9%232246977_12_1776079807%7C9; H_PS_PSSID=63148_67861_68166_69006_69193_69295_69372_69592_69616_69678_69766_69796_69779_69844_69917_69961_70013_70048_70097_70036_70117_70149_70124_70158_70230_70262_70187_70249_70205_70271_68739_70321_70142_70357_70391_70405_70428_70470_70476_70472_70478; delPer=0; BD_CK_SAM=1; PSINO=7; arialoadData=false; BDRCVFR[C0p6oIjvx-c]=mk3SLVN4HKm; BA_HECTOR=8k802k050h04aka1a58100018kag0h1l12ue428; H_WISE_SIDS=63148_67861_68166_69006_69193_69295_69372_69592_69616_69678_69766_69796_69779_69844_69917_69961_70013_70048_70097_70036_70117_70149_70124_70158_70230_70262_70187_70249_70205_70271_68739_70321_70142_70357_70391_70405_70428_70470_70476_70472_70478; H_PS_645EC=5b3dg%2Bo1fZjiciiEjCub2ov18ic%2FpDAgOXXHPYv%2FQY5pFTj5pz2jb0va%2BA; BAIDUID_BFESS=F1DBD00F808070A6D11BCE0F3E4EBE07:FG=1; baikeVisitId=41a92d90-013f-4958-bda8-2a8c7244bb12; BDSVRTM=6; BDORZ=B490B5EBF6F3CD402E515D22BCDA1598
+Host: www.baidu.com
+Referer: https://news.baidu.com/
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: same-site
+Sec-Fetch-User: ?1
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36 SLBrowser/9.0.8.5161 SLBChan/111 SLBVPV/64-bit
+sec-ch-ua: "Chromium";v="9", "Not?A_Brand";v="8"
+sec-ch-ua-mobile: ?0
+sec-ch-ua-platform: "Windows"
+```
+* 瞭望源-动态管理/请求伪造技术应用
+* csrf ssfr
+* 采集数据-批量采集
+
+任务五-1：(任务7后再执行)
+完善数据仓库模块中的功能：
+1、AI深度采集：通过技术手段对采集到的数据源进行深度解析，并获得详细的内容，并将详细内容保存到数据明细表中，同时与源数据进行关联。
+2、AI深度采集支持单条或多条数据采集，AI深度采集过程中需要有过程提示，要有采集日志提示，对结果有简单的统计分析。
+3、AI深度采集技术栈为：通过模型引擎中的默认大模型服务+crawl4ai来共同完成。
+4、AI深度采集完成后，需要在数据仓库列表中标注深度采集状态
+开发限制：
+- 遵循前置任务开发成果及要求完成功能模块的实现，保证开发的一致性。
+
+任务六：
+继续后端-管理侧功能模块的开发：
+接口管理：完成一个可以新增/修改/删除/分页的接口URL管理模块，该模块支持将互联网上搜集到的API放置于此模块集中管理，并对系统其他模块提供API接口服务。
+以下为部分接口示例：
+```
+接口地址：https://api.52vmy.cn/api/music/wy/rand
+返回格式：JSON
+请求方式：GET
+请求示例：https://api.52vmy.cn/api/music/wy/rand
+默认QPS：每2秒最多4次 携带Token可无限制
+
+接口地址：https://api.52vmy.cn/api/query/tian
+返回格式：JSON
+请求方式：GET
+请求示例：https://api.52vmy.cn/api/query/tian?city=北京市
+默认QPS：每2秒最多4次 携带Token可无限制
+接口备注：点击前往三日天气API
+```
+接口响应数据示例：
+```
+{
+    "code": 200,
+    "msg": "成功",
+    "data": {
+        "song": "悬湖",
+        "singer": "葛东琪",
+        "cover": "http://p1.music.126.net/CDhYcShQKH2VAMENuCxWWQ==/109951164166513349.jpg",
+        "Music": "http://music.163.com/song/media/outer/url?id=1397345903",
+        "id": 1397345903
+    }
+}
+```
+开发限制：
+- 遵循前置任务开发成果及要求完成功能模块的实现，保证开发的一致性。
+
+任务六-1：
+将以下数据新增到数据库接口管理对应的表中：
+接口地址：https://api.52vmy.cn/api/music/wy/rand
+返回格式：JSON
+请求方式：GET
+请求示例：https://api.52vmy.cn/api/music/wy/rand
+默认QPS：每2秒最多4次 携带Token可无限制
+
+接口地址：https://api.52vmy.cn/api/query/tian
+返回格式：JSON
+请求方式：GET
+请求示例：https://api.52vmy.cn/api/query/tian?city=北京市
+默认QPS：每2秒最多4次 携带Token可无限制
+接口备注：点击前往三日天气API
+
+任务七:
+继续后端 - 管理侧功能模块的开发:
+数字员工：该模块是基于大模型服务 + 接口管理中的 API 服务完成一个综合业务管理功能，主要目的是实现用户侧可以通过@xxx调用后台数字员工中的相关服务，如：
+@川小农：该数字员工主要通过模型引擎中的默认模型 + 提示词（prompt）实现智能对话，模型根据提示词及用户的问题，以 SSE（Server-Sent Events）方式返回响应结果。“川小农” 是该数字员工的别名，该名称需要动态管理和可配置，后台配置后，前台同步用新的别名才能与该数字员工进行对话。
+@天气：该数字员工主要通过接口管理中的 API 服务，提供天气响应数据，用户通过@天气 xxx实现对话和请求，其中xxx为城市名称。
+@音乐：该数字员工主要通过接口管理中的 API 服务，提供音乐响应数据，用户通过@音乐，获得随机音乐卡片。
+在类别中，需要标明数字员工的分类（AI / 普通），需要有说明，需要兼容两类员工的参数及配置。
+开发限制:
+遵循前置任务开发成果及要求完成功能模块的实现，保证开发的一致性。
+功能实现后，需要将对应的数字员工 “川小农”、“天气”、“音乐” 新增到数据库表中。
+
+任务八：
+继续前端-用户侧功能模块的开发：
+登录：利用后端-登录模块，实现前端用户登录，与管理用户共用一套鉴权逻辑，但是需要区分角色，前端只有普通用户
+角色（预留会员角色[订阅模式]，本期不开发）
+注册：允许用户注册成为普通用户。
+问数：设计并实现类似豆包/chatgpt风格的能够与AI对话的界面，左侧为任务历史记录，右侧为对话工作区。
+-- 核心业务功能是：通过调用后台模型引擎中的默认模型实现与AI对话功能，默认AI对话需要意图识别哪些是普通问题，哪些是需要通过sqlite对话的问题（智能问题的核心是指通过AI大模型与数据库中的通过采集和深度采集的数据进行对话，如：最新一条数据是什么？答：（此时应该到数据库中通过SQL技术实现数据检索并响应结果），原理是AI大模型通过类似callfunction等方式实现功能）。
+-- 通过@xxx实现与后台数字员工对话的功能。
+-- 响应数据采用流式响应，采用markdown渲染数据响应结果
+-- 界面中左侧需要实现模型服务切换（对应后台模型引擎中的模型服务）
+-- 界面中左侧需要记录历史对话的任务，点击可以查看和回放历史对话数据
+-- 界面中右侧需要采用chatgpt/豆包的对话风格，对话输入框需要支持普通输入+@数字员工输入。
+
