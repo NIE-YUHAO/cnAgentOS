@@ -1,0 +1,174 @@
+{% extends "layout.html" %}
+
+{% block title %}系统首页{% end %}
+
+{% block page_title %}系统首页{% end %}
+
+{% block content %}
+<div class="layui-row layui-col-space15">
+    <!-- 统计卡片 -->
+    <div class="layui-col-md3">
+        <div class="layui-card">
+            <div class="layui-card-header">
+                <i class="layui-icon layui-icon-user-circle" style="color: #10b981;"></i> 管理员数量
+            </div>
+            <div class="layui-card-body">
+                <div class="layui-row">
+                    <div class="layui-col-md8">
+                        <p class="layui-text" style="font-size: 32px; font-weight: 600; color: #10b981;">--</p>
+                        <p class="layui-text" style="color: #999; font-size: 13px;">总计管理员</p>
+                    </div>
+                    <div class="layui-col-md4" style="text-align: right;">
+                        <div style="width: 60px; height: 60px; background: rgba(16, 185, 129, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-left: auto;">
+                            <i class="layui-icon layui-icon-users" style="font-size: 30px; color: #10b981;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="layui-col-md3">
+        <div class="layui-card">
+            <div class="layui-card-header">
+                <i class="layui-icon layui-icon-database" style="color: #3b82f6;"></i> 模型数量
+            </div>
+            <div class="layui-card-body">
+                <div class="layui-row">
+                    <div class="layui-col-md8">
+                        <p class="layui-text" style="font-size: 32px; font-weight: 600; color: #3b82f6;">--</p>
+                        <p class="layui-text" style="color: #999; font-size: 13px;">已配置模型</p>
+                    </div>
+                    <div class="layui-col-md4" style="text-align: right;">
+                        <div style="width: 60px; height: 60px; background: rgba(59, 130, 246, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-left: auto;">
+                            <i class="layui-icon layui-icon-server" style="font-size: 30px; color: #3b82f6;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="layui-col-md3">
+        <div class="layui-card">
+            <div class="layui-card-header">
+                <i class="layui-icon layui-icon-eye" style="color: #f59e0b;"></i> 瞭望源数量
+            </div>
+            <div class="layui-card-body">
+                <div class="layui-row">
+                    <div class="layui-col-md8">
+                        <p class="layui-text" style="font-size: 32px; font-weight: 600; color: #f59e0b;">--</p>
+                        <p class="layui-text" style="color: #999; font-size: 13px;">已配置源</p>
+                    </div>
+                    <div class="layui-col-md4" style="text-align: right;">
+                        <div style="width: 60px; height: 60px; background: rgba(245, 158, 11, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-left: auto;">
+                            <i class="layui-icon layui-icon-link" style="font-size: 30px; color: #f59e0b;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="layui-col-md3">
+        <div class="layui-card">
+            <div class="layui-card-header">
+                <i class="layui-icon layui-icon-robot" style="color: #8b5cf6;"></i> 数字员工
+            </div>
+            <div class="layui-card-body">
+                <div class="layui-row">
+                    <div class="layui-col-md8">
+                        <p class="layui-text" style="font-size: 32px; font-weight: 600; color: #8b5cf6;">--</p>
+                        <p class="layui-text" style="color: #999; font-size: 13px;">已激活员工</p>
+                    </div>
+                    <div class="layui-col-md4" style="text-align: right;">
+                        <div style="width: 60px; height: 60px; background: rgba(139, 92, 246, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-left: auto;">
+                            <i class="layui-icon layui-icon-robot" style="font-size: 30px; color: #8b5cf6;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 系统信息 -->
+<div class="layui-row layui-col-space15" style="margin-top: 15px;">
+    <div class="layui-col-md8">
+        <div class="layui-card">
+            <div class="layui-card-header">
+                <i class="layui-icon layui-icon-info" style="color: #10b981;"></i> 系统概览
+            </div>
+            <div class="layui-card-body">
+                <table class="layui-table" style="margin-bottom: 0;">
+                    <tbody>
+                        <tr>
+                            <td width="150">系统名称</td>
+                            <td>cnAgentOS - AI智能瞭望与智能问数系统</td>
+                        </tr>
+                        <tr>
+                            <td>系统版本</td>
+                            <td>v0.1.0</td>
+                        </tr>
+                        <tr>
+                            <td>技术架构</td>
+                            <td>Tornado MVC + B/S</td>
+                        </tr>
+                        <tr>
+                            <td>后端框架</td>
+                            <td>Tornado 6.5.5</td>
+                        </tr>
+                        <tr>
+                            <td>前端框架</td>
+                            <td>Layui 2.13.6</td>
+                        </tr>
+                        <tr>
+                            <td>数据库</td>
+                            <td>SQLite3</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="layui-col-md4">
+        <div class="layui-card">
+            <div class="layui-card-header">
+                <i class="layui-icon layui-icon-bell" style="color: #f59e0b;"></i> 快捷操作
+            </div>
+            <div class="layui-card-body">
+                <div class="layui-btn-container" style="display: flex; flex-direction: column; gap: 10px;">
+                    <button class="layui-btn layui-btn-primary layui-btn-fluid" onclick="window.location.href='/admin/user';">
+                        <i class="layui-icon layui-icon-user"></i> 用户管理
+                    </button>
+                    <button class="layui-btn layui-btn-primary layui-btn-fluid">
+                        <i class="layui-icon layui-icon-server"></i> 模型管理
+                    </button>
+                    <button class="layui-btn layui-btn-primary layui-btn-fluid">
+                        <i class="layui-icon layui-icon-link"></i> 瞭望源管理
+                    </button>
+                    <button class="layui-btn layui-btn-primary layui-btn-fluid">
+                        <i class="layui-icon layui-icon-set"></i> 系统设置
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 欢迎信息 -->
+<div class="layui-card" style="margin-top: 15px;">
+    <div class="layui-card-body" style="text-align: center; padding: 30px;">
+        <div style="display: inline-flex; align-items: center; gap: 20px;">
+            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="layui-icon layui-icon-snowflake" style="font-size: 40px; color: #fff;"></i>
+            </div>
+            <div class="text-left">
+                <h2 style="color: #333; margin-bottom: 5px;">欢迎回来，{{ admin['username'] if admin else '管理员' }}！</h2>
+                <p style="color: #999;">cnAgentOS AI智能瞭望与智能问数系统管理后台</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% end %}

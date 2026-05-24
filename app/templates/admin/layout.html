@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}系统管理后台{% end %} - cnAgentOS</title>
+    <link rel="stylesheet" href="/static/dist/layui/layui-v2.13.6/layui/css/layui.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .admin-sidebar {
+            width: 220px;
+            background: #001529;
+            color: #fff;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 999;
+            overflow-y: auto;
+        }
+
+        .admin-sidebar-logo {
+            padding: 20px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            text-align: center;
+        }
+
+        .admin-sidebar-logo h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .admin-sidebar-logo p {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 5px;
+        }
+
+        .admin-main {
+            flex: 1;
+            margin-left: 220px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .admin-header {
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 60px;
+        }
+
+        .admin-header-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .admin-header-left h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+        }
+
+        .admin-header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .admin-user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 20px;
+            transition: background 0.3s;
+        }
+
+        .admin-user-info:hover {
+            background: #f5f5f5;
+        }
+
+        .admin-user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .admin-logout-btn {
+            color: #ff4d4f;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+
+        .admin-logout-btn:hover {
+            background: #fff2f0;
+        }
+
+        .admin-content {
+            flex: 1;
+            padding: 20px;
+            background: #f5f5f5;
+            overflow-y: auto;
+        }
+
+        .admin-content-inner {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            padding: 20px;
+        }
+
+        .layui-nav-tree {
+            background: transparent !important;
+            border: none !important;
+        }
+
+        .layui-nav-tree .layui-nav-item a {
+            color: rgba(255, 255, 255, 0.85) !important;
+            height: 46px !important;
+            line-height: 46px !important;
+            padding-left: 30px !important;
+            border-radius: 0 !important;
+        }
+
+        .layui-nav-tree .layui-nav-item a:hover {
+            background: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .layui-nav-tree .layui-nav-item.layui-this > a {
+            background: #10b981 !important;
+            color: #fff !important;
+        }
+
+        .layui-nav-tree .layui-nav-child {
+            background: rgba(0, 0, 0, 0.2) !important;
+        }
+
+        .layui-nav-tree .layui-nav-child a {
+            padding-left: 50px !important;
+            height: 40px !important;
+            line-height: 40px !important;
+        }
+
+        .layui-nav-tree .layui-nav-child a:hover {
+            background: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .layui-nav-tree .layui-nav-child dd.layui-this > a {
+            background: #10b981 !important;
+            color: #fff !important;
+        }
+
+        .layui-nav-bar {
+            display: none !important;
+        }
+
+        @media (max-width: 768px) {
+            .admin-sidebar {
+                width: 60px;
+            }
+
+            .admin-sidebar-logo h1,
+            .admin-sidebar-logo p {
+                display: none;
+            }
+
+            .admin-sidebar-logo {
+                padding: 15px 0;
+            }
+
+            .admin-sidebar-logo::after {
+                content: '后台';
+                font-size: 12px;
+                display: block;
+                writing-mode: vertical-rl;
+                text-orientation: mixed;
+                margin: 0 auto;
+            }
+
+            .layui-nav-tree .layui-nav-item a span {
+                display: none;
+            }
+
+            .layui-nav-tree .layui-nav-item a {
+                padding-left: 15px !important;
+                text-align: center;
+            }
+
+            .layui-nav-tree .layui-nav-item a .layui-icon {
+                margin-right: 0 !important;
+            }
+
+            .layui-nav-tree .layui-nav-child {
+                display: none !important;
+            }
+
+            .admin-main {
+                margin-left: 60px;
+            }
+
+            .admin-header {
+                padding: 0 10px;
+            }
+
+            .admin-header-left h2 {
+                font-size: 14px;
+            }
+
+            .admin-header-right {
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-layout">
+        <div class="admin-sidebar">
+            <div class="admin-sidebar-logo">
+                <h1><i class="layui-icon layui-icon-snowflake" style="margin-right: 8px;"></i>cnAgentOS</h1>
+                <p>AI智能瞭望系统</p>
+            </div>
+            <ul class="layui-nav layui-nav-tree" lay-filter="admin-nav">
+                <li class="layui-nav-item layui-nav-itemed">
+                    <a href="javascript:;"><i class="layui-icon layui-icon-set" style="margin-right: 8px;"></i><span>系统管理</span></a>
+                    <dl class="layui-nav-child">
+                        <dd><a href="/admin/user"><i class="layui-icon layui-icon-user" style="margin-right: 6px;"></i>用户管理</a></dd>
+                        <dd><a href="/admin/function"><i class="layui-icon layui-icon-app" style="margin-right: 6px;"></i>功能管理</a></dd>
+                        <dd><a href="/admin/role"><i class="layui-icon layui-icon-group" style="margin-right: 6px;"></i>角色管理</a></dd>
+                        <dd><a href="/admin/permission"><i class="layui-icon layui-icon-transfer" style="margin-right: 6px;"></i>权限管理</a></dd>
+                    </dl>
+                </li>
+                <li class="layui-nav-item">
+                    <a href="javascript:;"><i class="layui-icon layui-icon-engine" style="margin-right: 8px;"></i><span>模型引擎</span></a>
+                    <dl class="layui-nav-child">
+                        <dd><a href="/admin/model"><i class="layui-icon layui-icon-server" style="margin-right: 6px;"></i>模型管理</a></dd>
+                        <dd><a href="/admin/token/stats"><i class="layui-icon layui-icon-chart-screen" style="margin-right: 6px;"></i>Token统计</a></dd>
+                    </dl>
+                </li>
+                <li class="layui-nav-item">
+                    <a href="javascript:;"><i class="layui-icon layui-icon-eye" style="margin-right: 8px;"></i><span>瞭望管理</span></a>
+                    <dl class="layui-nav-child">
+                        <dd><a href="javascript:;"><i class="layui-icon layui-icon-link" style="margin-right: 6px;"></i>瞭望源管理</a></dd>
+                        <dd><a href="javascript:;"><i class="layui-icon layui-icon-clock" style="margin-right: 6px;"></i>采集任务</a></dd>
+                    </dl>
+                </li>
+                <li class="layui-nav-item">
+                    <a href="javascript:;"><i class="layui-icon layui-icon-robot" style="margin-right: 8px;"></i><span>数字员工</span></a>
+                    <dl class="layui-nav-child">
+                        <dd><a href="/admin/digital_worker"><i class="layui-icon layui-icon-group" style="margin-right: 6px;"></i>员工管理</a></dd>
+                    </dl>
+                </li>
+                <li class="layui-nav-item">
+                    <a href="javascript:;"><i class="layui-icon layui-icon-screen" style="margin-right: 8px;"></i><span>数智大屏</span></a>
+                    <dl class="layui-nav-child">
+                        <dd><a href="javascript:;"><i class="layui-icon layui-icon-chart" style="margin-right: 6px;"></i>数据报表</a></dd>
+                        <dd><a href="javascript:;"><i class="layui-icon layui-icon-3d" style="margin-right: 6px;"></i>数字孪生</a></dd>
+                    </dl>
+                </li>
+            </ul>
+        </div>
+
+        <div class="admin-main">
+            <div class="admin-header">
+                <div class="admin-header-left">
+                    <h2>{% block page_title %}系统首页{% end %}</h2>
+                </div>
+                <div class="admin-header-right">
+                    <div class="admin-user-info" id="userInfo">
+                        <div class="admin-user-avatar">{{ admin['username'][0].upper() if admin else 'A' }}</div>
+                        <span>{{ admin['username'] if admin else '未知用户' }}</span>
+                    </div>
+                    <div class="admin-logout-btn" id="logoutBtn">
+                        <i class="layui-icon layui-icon-logout"></i> 退出
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-content">
+                <div class="admin-content-inner">
+                    {% block content %}{% end %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/dist/layui/layui-v2.13.6/layui/layui.js"></script>
+    <script>
+        layui.use(['element', 'layer'], function() {
+            var element = layui.element;
+            var layer = layui.layer;
+
+            element.on('nav(admin-nav)', function(elem) {
+                var href = elem.attr('href');
+                if (href && href !== 'javascript:;') {
+                    window.location.href = href;
+                }
+            });
+
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                layer.confirm('确定要退出登录吗？', {
+                    icon: 3,
+                    title: '提示'
+                }, function(index) {
+                    layer.close(index);
+                    window.location.href = '/admin/logout';
+                });
+            });
+        });
+    </script>
+    {% block script %}{% end %}
+</body>
+</html>

@@ -1,0 +1,358 @@
+{% extends "layout.html" %}
+
+{% block title %}功能管理{% end %}
+
+{% block page_title %}功能管理{% end %}
+
+{% block content %}
+<div class="layui-card">
+    <div class="layui-card-header">
+        <div class="layui-row">
+            <div class="layui-col-md8">
+                <h3 class="layui-card-title">功能菜单管理</h3>
+            </div>
+            <div class="layui-col-md4" style="text-align: right;">
+                <button class="layui-btn" id="addBtn">
+                    <i class="layui-icon layui-icon-add-circle"></i> 新增功能
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="layui-card-body">
+        <div class="layui-btn-group" style="margin-bottom: 15px;">
+            <button class="layui-btn layui-btn-danger" id="batchDeleteBtn" disabled>
+                <i class="layui-icon layui-icon-delete"></i> 批量删除
+            </button>
+        </div>
+
+        <table class="layui-hide" id="functionTable" lay-filter="functionTable"></table>
+
+        <script type="text/html" id="toolbarDemo">
+            <div class="layui-btn-container">
+                <button class="layui-btn layui-btn-sm" lay-event="add">
+                    <i class="layui-icon layui-icon-add-circle"></i> 新增
+                </button>
+            </div>
+        </script>
+
+        <script type="text/html" id="barDemo">
+            <a class="layui-btn layui-btn-xs" lay-event="edit">
+                <i class="layui-icon layui-icon-edit"></i> 编辑
+            </a>
+            <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">
+                <i class="layui-icon layui-icon-delete"></i> 删除
+            </a>
+        </script>
+
+        <script type="text/html" id="typeTpl">
+            &#123;&#123;#" &#125;&#125;   if(d.type === 'directory'){ &#125;&#125;
+            <span class="layui-badge layui-bg-blue">目录</span>
+            &#123;&#123;#" &#125;&#125;   } else { &#125;&#125;
+            <span class="layui-badge">菜单</span>
+            &#123;&#123;#" &#125;&#125;   } &#125;&#125;
+        </script>
+
+        <script type="text/html" id="statusTpl">
+            &#123;&#123;#" &#125;&#125;   if(d.status === 1){ &#125;&#125;
+            <span class="layui-badge layui-bg-green">启用</span>
+            &#123;&#123;#" &#125;&#125;   } else { &#125;&#125;
+            <span class="layui-badge layui-bg-gray">禁用</span>
+            &#123;&#123;#" &#125;&#125;   } &#125;&#125;
+        </script>
+
+        <script type="text/html" id="parentTpl">
+            &#123;&#123;#" &#125;&#125;   if(d.parent_name){ &#125;&#125;
+            <span>&#123;&#123;d.parent_name&#125;&#125;</span>
+            &#123;&#123;#" &#125;&#125;   } else { &#125;&#125;
+            <span class="layui-badge layui-bg-cyan">顶级</span>
+            &#123;&#123;#" &#125;&#125;   } &#125;&#125;
+        </script>
+    </div>
+</div>
+
+<div id="functionModal" style="display: none;">
+    <form class="layui-form" id="functionForm" lay-filter="functionForm">
+        <input type="hidden" name="id">
+        <div class="layui-form-item">
+            <label class="layui-form-label">上级功能</label>
+            <div class="layui-input-block">
+                <select name="parent_id" id="parentSelect">
+                    <option value="0">顶级功能</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">功能名称</label>
+            <div class="layui-input-block">
+                <input type="text" name="name" lay-verify="required" placeholder="请输入功能名�? class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">功能编码</label>
+            <div class="layui-input-block">
+                <input type="text" name="code" lay-verify="required" placeholder="请输入功能编�? class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">功能类型</label>
+            <div class="layui-input-block">
+                <select name="type" lay-verify="required">
+                    <option value="directory">目录</option>
+                    <option value="menu">菜单</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">图标class</label>
+            <div class="layui-input-block">
+                <input type="text" name="icon" placeholder="请输入图标class，如 layui-icon-user" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">URL地址</label>
+            <div class="layui-input-block">
+                <input type="text" name="url" placeholder="请输入URL地址" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">排序�?/label>
+            <div class="layui-input-block">
+                <input type="number" name="sort_order" value="0" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">状�?/label>
+            <div class="layui-input-block">
+                <input type="radio" name="status" value="1" title="启用" checked>
+                <input type="radio" name="status" value="0" title="禁用">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button type="submit" class="layui-btn" lay-submit lay-filter="submitForm">确认提交</button>
+                <button type="button" class="layui-btn layui-btn-primary" id="closeModal">取消</button>
+            </div>
+        </div>
+    </form>
+</div>
+{% end %}
+
+{% block script %}
+<script>
+layui.use(['table', 'layer', 'form'], function() {
+    var table = layui.table;
+    var layer = layui.layer;
+    var form = layui.form;
+
+    var functionTable = table.render({
+        elem: '#functionTable',
+        url: '/admin/function/api',
+        method: 'GET',
+        page: true,
+        limit: 20,
+        limits: [10, 20, 50, 100],
+        toolbar: '#toolbarDemo',
+        defaultToolbar: ['filter', 'exports', 'print'],
+        cols: [[
+            {type: 'checkbox', fixed: 'left'},
+            {field: 'id', title: 'ID', width: 80, sort: true},
+            {field: 'name', title: '功能名称', width: 150},
+            {field: 'code', title: '功能编码', width: 150},
+            {field: 'parent_name', title: '上级功能', width: 120, templet: '#parentTpl'},
+            {field: 'type', title: '类型', width: 100, templet: '#typeTpl'},
+            {field: 'icon', title: '图标', width: 180},
+            {field: 'url', title: 'URL地址', width: 200},
+            {field: 'sort_order', title: '排序', width: 80, sort: true},
+            {field: 'status', title: '状�?, width: 100, templet: '#statusTpl'},
+            {fixed: 'right', title: '操作', width: 150, toolbar: '#barDemo'}
+        ]]
+    });
+
+    function loadFunctionTree() {
+        $.get('/admin/function/api?action=tree', function(res) {
+            if (res.code === 0) {
+                var html = '<option value="0">顶级功能</option>';
+                for (var i = 0; i < res.data.length; i++) {
+                    html += '<option value="' + res.data[i].id + '">' + res.data[i].name + '</option>';
+                    if (res.data[i].children) {
+                        for (var j = 0; j < res.data[i].children.length; j++) {
+                            html += '<option value="' + res.data[i].children[j].id + '">  ├─ ' + res.data[i].children[j].name + '</option>';
+                        }
+                    }
+                }
+                $('#parentSelect').html(html);
+                form.render('select');
+            }
+        });
+    }
+
+    $('#addBtn').on('click', function() {
+        openModal();
+    });
+
+    table.on('toolbar(functionTable)', function(obj) {
+        if (obj.event === 'add') {
+            openModal();
+        }
+    });
+
+    var openModal = function(data) {
+        loadFunctionTree();
+
+        layer.open({
+            type: 1,
+            title: data ? '编辑功能' : '新增功能',
+            content: $('#functionModal'),
+            area: ['500px', '500px'],
+            success: function() {
+                form.val('functionForm', {
+                    'id': '',
+                    'parent_id': '0',
+                    'name': '',
+                    'code': '',
+                    'type': 'menu',
+                    'icon': '',
+                    'url': '#',
+                    'sort_order': '0',
+                    'status': '1'
+                });
+                if (data) {
+                    form.val('functionForm', {
+                        'id': data.id,
+                        'parent_id': data.parent_id || '0',
+                        'name': data.name,
+                        'code': data.code,
+                        'type': data.type,
+                        'icon': data.icon || '',
+                        'url': data.url || '#',
+                        'sort_order': data.sort_order || '0',
+                        'status': String(data.status)
+                    });
+                }
+            }
+        });
+    };
+
+    $('#closeModal').on('click', function() {
+        layer.closeAll('page');
+    });
+
+    form.on('submit(submitForm)', function(data) {
+        var url = '/admin/function/api';
+        var method = 'POST';
+
+        if (data.field.id) {
+            method = 'PUT';
+        }
+
+        layer.load(2, {shade: [0.3, '#000']});
+
+        fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams(data.field)
+        })
+        .then(response => response.json())
+        .then(result => {
+            layer.closeAll('loading');
+            if (result.code === 0) {
+                layer.msg(result.msg, {icon: 1}, function() {
+                    layer.closeAll('page');
+                    functionTable.reload();
+                });
+            } else {
+                layer.msg(result.msg, {icon: 2});
+            }
+        })
+        .catch(error => {
+            layer.closeAll('loading');
+            layer.msg('网络请求失败', {icon: 2});
+        });
+
+        return false;
+    });
+
+    table.on('tool(functionTable)', function(obj) {
+        var data = obj.data;
+        if (obj.event === 'edit') {
+            openModal(data);
+        } else if (obj.event === 'del') {
+            layer.confirm('确定要删除该功能吗？', {icon: 3}, function(index) {
+                layer.close(index);
+                layer.load(2, {shade: [0.3, '#000']});
+
+                fetch('/admin/function/api', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({ids: data.id})
+                })
+                .then(response => response.json())
+                .then(result => {
+                    layer.closeAll('loading');
+                    if (result.code === 0) {
+                        layer.msg(result.msg, {icon: 1});
+                        obj.del();
+                    } else {
+                        layer.msg(result.msg, {icon: 2});
+                    }
+                })
+                .catch(error => {
+                    layer.closeAll('loading');
+                    layer.msg('网络请求失败', {icon: 2});
+                });
+            });
+        }
+    });
+
+    $('#batchDeleteBtn').on('click', function() {
+        var checkStatus = table.checkStatus('functionTable');
+        var data = checkStatus.data;
+
+        if (data.length === 0) {
+            layer.msg('请选择要删除的功能', {icon: 2});
+            return;
+        }
+
+        var ids = data.map(item => item.id).join(',');
+
+        layer.confirm('确定要删除选中�?' + data.length + ' 个功能吗�?, {icon: 3}, function(index) {
+            layer.close(index);
+            layer.load(2, {shade: [0.3, '#000']});
+
+            fetch('/admin/function/api', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({ids: ids})
+            })
+            .then(response => response.json())
+            .then(result => {
+                layer.closeAll('loading');
+                if (result.code === 0) {
+                    layer.msg(result.msg, {icon: 1}, function() {
+                        functionTable.reload();
+                        $('#batchDeleteBtn').attr('disabled', true);
+                    });
+                } else {
+                    layer.msg(result.msg, {icon: 2});
+                }
+            })
+            .catch(error => {
+                layer.closeAll('loading');
+                layer.msg('网络请求失败', {icon: 2});
+            });
+        });
+    });
+
+    table.on('checkbox(functionTable)', function(obj) {
+        var checkStatus = table.checkStatus('functionTable');
+        $('#batchDeleteBtn').attr('disabled', checkStatus.data.length === 0);
+    });
+});
+</script>
+{% end %}

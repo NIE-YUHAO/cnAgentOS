@@ -1,0 +1,391 @@
+{% extends "layout.html" %}
+
+{% block title %}瞭望源管理{% end %}
+
+{% block page_title %}瞭望管理 - 瞭望源管理{% end %}
+
+{% block content %}
+<div class="observation-container">
+    <div class="observation-header">
+        <div class="header-left">
+            <h2><i class="layui-icon layui-icon-link" style="margin-right: 10px; font-size: 24px;"></i>瞭望数据源管理</h2>
+            <p class="subtitle">管理智能数据采集规则，支持动态配置采集源</p>
+        </div>
+        <div class="header-right">
+            <button class="layui-btn" id="addBtn">
+                <i class="layui-icon layui-icon-add-circle"></i> 新增数据源
+            </button>
+        </div>
+    </div>
+
+    <div class="search-bar">
+        <input type="text" id="keyword" placeholder="搜索数据源名称或编码..." class="search-input">
+        <button class="layui-btn" id="doSearch">
+            <i class="layui-icon layui-icon-search"></i> 查询
+        </button>
+        <button class="layui-btn layui-btn-primary" id="resetSearch">
+            <i class="layui-icon layui-icon-refresh"></i> 重置
+        </button>
+    </div>
+
+    <table class="layui-hide" id="sourceTable" lay-filter="sourceTable"></table>
+</div>
+
+<div id="sourceModal" style="display: none;">
+    <form class="layui-form" id="sourceForm" lay-filter="sourceForm" style="padding: 20px;">
+        <input type="hidden" name="id">
+        <div class="layui-form-item">
+            <label class="layui-form-label">数据源名称</label>
+            <div class="layui-input-block">
+                <input type="text" name="name" lay-verify="required" placeholder="请输入数据源名称" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">数据源编码</label>
+            <div class="layui-input-block">
+                <input type="text" name="code" lay-verify="required" placeholder="请输入数据源编码（唯一标识）" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">数据源类型</label>
+            <div class="layui-input-block">
+                <select name="source_type" lay-verify="required">
+                    <option value="">请选择数据源类型</option>
+                    <option value="news">新闻</option>
+                    <option value="social">社交媒体</option>
+                    <option value="ecommerce">电商</option>
+                    <option value="forum">论坛</option>
+                    <option value="blog">博客</option>
+                    <option value="other">其他</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">入口URL</label>
+            <div class="layui-input-block">
+                <input type="text" name="entry_url" lay-verify="required" placeholder="请输入采集入口URL，支持{keyword}占位符" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">请求方法</label>
+            <div class="layui-input-block">
+                <select name="request_method">
+                    <option value="GET">GET</option>
+                    <option value="POST">POST</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item layui-form-text">
+            <label class="layui-form-label">请求头(Headers)</label>
+            <div class="layui-input-block">
+                <textarea name="headers" placeholder="请输入JSON格式的请求头，如：&#123;&quot;User-Agent&quot;: &quot;Mozilla/5.0...&quot;&#125;" class="layui-textarea" rows="6"></textarea>
+            </div>
+        </div>
+        <div class="layui-form-item layui-form-text">
+            <label class="layui-form-label">参数模板</label>
+            <div class="layui-input-block">
+                <textarea name="params_template" placeholder="请输入JSON格式的参数模板，如：&#123;&quot;keyword&quot;: &quot;&quot;&#125;" class="layui-textarea" rows="3"></textarea>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">编码格式</label>
+            <div class="layui-input-block">
+                <select name="encoding">
+                    <option value="utf-8">UTF-8</option>
+                    <option value="gbk">GBK</option>
+                    <option value="gb2312">GB2312</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item layui-form-text">
+            <label class="layui-form-label">解析规则</label>
+            <div class="layui-input-block">
+                <textarea name="parse_rule" placeholder="请输入JSON格式的解析规则，如：&#123;&quot;type&quot;: &quot;xpath&quot;, &quot;selector&quot;: &quot;//div[@class=\&quot;news\&quot;]&quot;&#125;" class="layui-textarea" rows="4"></textarea>
+            </div>
+        </div>
+        <div class="layui-form-item layui-form-text">
+            <label class="layui-form-label">描述说明</label>
+            <div class="layui-input-block">
+                <textarea name="description" placeholder="请输入数据源描述" class="layui-textarea" rows="2"></textarea>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">状态</label>
+            <div class="layui-input-block">
+                <input type="radio" name="status" value="1" title="启用" checked>
+                <input type="radio" name="status" value="0" title="禁用">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button type="submit" class="layui-btn" lay-submit lay-filter="sourceSubmit">提交</button>
+                <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script type="text/html" id="toolbarDemo">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="getCheckData">批量删除</button>
+    </div>
+</script>
+
+<script type="text/html" id="typeTpl">
+    &#123;&#123;#" &#125;&#125;  if(d.source_type === 'news'){ &#125;&#125;
+    <span class="layui-badge layui-bg-blue">新闻</span>
+    &#123;&#123;#" &#125;&#125;  } else if(d.source_type === 'social'){ &#125;&#125;
+    <span class="layui-badge layui-bg-orange">社交媒体</span>
+    &#123;&#123;#" &#125;&#125;  } else if(d.source_type === 'ecommerce'){ &#125;&#125;
+    <span class="layui-badge layui-bg-green">电商</span>
+    &#123;&#123;#" &#125;&#125;  } else if(d.source_type === 'forum'){ &#125;&#125;
+    <span class="layui-badge layui-bg-cyan">论坛</span>
+    &#123;&#123;#" &#125;&#125;  } else if(d.source_type === 'blog'){ &#125;&#125;
+    <span class="layui-badge layui-bg-purple">博客</span>
+    &#123;&#123;#" &#125;&#125;  } else { &#125;&#125;
+    <span class="layui-badge layui-bg-gray">其他</span>
+    &#123;&#123;#" &#125;&#125;  } &#125;&#125;
+</script>
+
+<script type="text/html" id="statusTpl">
+    &#123;&#123;#" &#125;&#125;  if(d.status === 1){ &#125;&#125;
+    <span class="layui-badge layui-bg-green">启用</span>
+    &#123;&#123;#" &#125;&#125;  } else { &#125;&#125;
+    <span class="layui-badge layui-bg-gray">禁用</span>
+    &#123;&#123;#" &#125;&#125;  } &#125;&#125;
+</script>
+
+<script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-xs" lay-event="edit">
+        <i class="layui-icon layui-icon-edit"></i> 编辑
+    </a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">
+        <i class="layui-icon layui-icon-delete"></i> 删除
+    </a>
+    <a class="layui-btn layui-btn-normal layui-btn-xs" lay-event="test">
+        <i class="layui-icon layui-icon-release"></i> 测试
+    </a>
+</script>
+
+<style>
+.observation-container {
+    padding: 20px;
+}
+
+.observation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    color: #fff;
+}
+
+.observation-header h2 {
+    margin: 0;
+    color: #fff;
+}
+
+.observation-header .subtitle {
+    margin: 5px 0 0 0;
+    opacity: 0.9;
+}
+
+.search-bar {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.search-input {
+    width: 300px;
+    margin-right: 10px;
+}
+
+.layui-table-view {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+</style>
+
+{% end %}
+
+{% block script %}
+<script>
+layui.use(['table', 'form', 'layer'], function() {
+    var table = layui.table;
+    var form = layui.form;
+    var layer = layui.layer;
+
+    var tableIns = table.render({
+        elem: '#sourceTable',
+        url: '/admin/observation/api',
+        method: 'get',
+        toolbar: '#toolbarDemo',
+        defaultToolbar: ['filter', 'exports', 'print'],
+        page: true,
+        limits: [10, 20, 50, 100],
+        limit: 10,
+        cols: [[
+            {type: 'checkbox', fixed: 'left'},
+            {field: 'id', title: 'ID', width: 80, sort: true, fixed: 'left'},
+            {field: 'name', title: '数据源名称', width: 150, fixed: 'left'},
+            {field: 'code', title: '编码', width: 150},
+            {field: 'source_type', title: '类型', width: 120, templet: '#typeTpl'},
+            {field: 'entry_url', title: '入口URL', minWidth: 200},
+            {field: 'request_method', title: '方法', width: 100},
+            {field: 'encoding', title: '编码', width: 100},
+            {field: 'status', title: '状态', width: 100, templet: '#statusTpl'},
+            {field: 'description', title: '描述', minWidth: 150},
+            {fixed: 'right', title: '操作', width: 220, align: 'center', toolbar: '#barDemo'}
+        ]],
+        parseData: function(res) {
+            return {
+                "code": res.code,
+                "msg": res.msg,
+                "count": res.count,
+                "data": res.data
+            };
+        }
+    });
+
+    table.on('tool(sourceTable)', function(obj) {
+        var data = obj.data;
+        if(obj.event === 'del') {
+            layer.confirm('确定删除该数据源吗？', function(index) {
+                $.ajax({
+                    url: '/admin/observation/api',
+                    type: 'DELETE',
+                    data: { id: data.id },
+                    success: function(res) {
+                        if(res.code === 0) {
+                            layer.msg('删除成功', {icon: 1});
+                            obj.del();
+                        } else {
+                            layer.msg(res.msg, {icon: 2});
+                        }
+                    }
+                });
+                layer.close(index);
+            });
+        } else if(obj.event === 'edit') {
+            openModal(data);
+        } else if(obj.event === 'test') {
+            layer.msg('测试功能开发中...', {icon: 0});
+        }
+    });
+
+    table.on('toolbar(sourceTable)', function(obj) {
+        var checkStatus = table.checkStatus('sourceTable');
+        var data = checkStatus.data;
+        if(obj.event === 'getCheckData') {
+            if(data.length === 0) {
+                layer.msg('请选择要删除的数据', {icon: 0});
+                return;
+            }
+            var ids = data.map(function(item) { return item.id; });
+            layer.confirm('确定删除选中的 ' + ids.length + ' 个数据源吗？', function(index) {
+                var count = 0;
+                ids.forEach(function(id) {
+                    $.ajax({
+                        url: '/admin/observation/api',
+                        type: 'DELETE',
+                        data: { id: id },
+                        async: false,
+                        success: function(res) {
+                            if(res.code === 0) count++;
+                        }
+                    });
+                });
+                layer.msg('成功删除 ' + count + ' 个数据源', {icon: 1});
+                tableIns.reload();
+                layer.close(index);
+            });
+        }
+    });
+
+    $('#addBtn').on('click', function() {
+        openModal(null);
+    });
+
+    $('#doSearch').on('click', function() {
+        var keyword = $('#keyword').val();
+        tableIns.reload({
+            where: { keyword: keyword },
+            page: { curr: 1 }
+        });
+    });
+
+    $('#resetSearch').on('click', function() {
+        $('#keyword').val('');
+        tableIns.reload({
+            where: { keyword: '' },
+            page: { curr: 1 }
+        });
+    });
+
+    function openModal(data) {
+        var title = data ? '编辑数据源' : '新增数据源';
+        var formData = data ? {
+            'id': data.id,
+            'name': data.name,
+            'code': data.code,
+            'source_type': data.source_type,
+            'entry_url': data.entry_url,
+            'request_method': data.request_method,
+            'headers': data.headers,
+            'params_template': data.params_template,
+            'encoding': data.encoding,
+            'parse_rule': data.parse_rule,
+            'description': data.description,
+            'status': data.status
+        } : {};
+
+        layer.open({
+            type: 1,
+            title: title,
+            content: $('#sourceModal'),
+            area: ['700px', '600px'],
+            btn: ['提交', '取消'],
+            success: function() {
+                form.val('sourceForm', formData);
+                if (!data) {
+                    $('#sourceForm')[0].reset();
+                    formData.status = 1;
+                    form.val('sourceForm', formData);
+                }
+            },
+            yes: function(index, layero) {
+                var formData = form.val('sourceForm');
+                var url = data ? '/admin/observation/api' : '/admin/observation/api';
+                var type = data ? 'PUT' : 'POST';
+
+                $.ajax({
+                    url: url,
+                    type: type,
+                    data: formData,
+                    success: function(res) {
+                        if(res.code === 0) {
+                            layer.msg(title + '成功', {icon: 1});
+                            tableIns.reload();
+                            layer.close(index);
+                        } else {
+                            layer.msg(res.msg, {icon: 2});
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    form.on('submit(sourceSubmit)', function(data) {
+        return false;
+    });
+});
+</script>
+{% end %}

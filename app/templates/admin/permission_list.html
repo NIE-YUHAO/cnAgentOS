@@ -1,0 +1,208 @@
+{% extends "layout.html" %}
+
+{% block title %}权限管理{% end %}
+
+{% block page_title %}权限管理{% end %}
+
+{% block content %}
+<div class="layui-card">
+    <div class="layui-card-header">
+        <h3 class="layui-card-title">权限管理 - 角色与功能映�?/h3>
+    </div>
+    <div class="layui-card-body">
+        <div class="layui-form" lay-filter="permissionForm">
+            <div class="layui-form-item">
+                <label class="layui-form-label">选择角色</label>
+                <div class="layui-input-inline" style="width: 300px;">
+                    <select name="role_id" id="roleSelect" lay-verify="required" lay-change="loadPermissions">
+                        <option value="">请选择角色</option>
+                        {% for role in roles %}
+                        <option value="{{ role['id'] }}">{{ role['name'] }} ({{ role['code'] }})</option>
+                        {% end %}
+                    </select>
+                </div>
+                <div class="layui-input-inline">
+                    <button class="layui-btn" id="loadBtn">
+                        <i class="layui-icon layui-icon-refresh"></i> 加载权限
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="layui-form" id="permissionForm">
+            <div class="permission-tree" id="permissionTree"></div>
+            <div class="layui-form-item" style="margin-top: 20px;">
+                <div class="layui-input-block">
+                    <button class="layui-btn layui-btn-normal" id="saveBtn" type="button">
+                        <i class="layui-icon layui-icon-ok"></i> 保存权限
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% end %}
+
+{% block script %}
+<script>
+layui.use(['form', 'layer'], function() {
+    var form = layui.form;
+    var layer = layui.layer;
+
+    var functions = {{ functions_json }};
+    var currentPermissions = [];
+
+    function renderPermissionTree() {
+        var html = '<div class="layui-form-item"><label class="layui-form-label">功能权限</label><div class="layui-input-block">';
+
+        for (var i = 0; i < functions.length; i++) {
+            var func = functions[i];
+            var checked = isFunctionChecked(func.id);
+
+            html += '<div class="function-item" style="margin-bottom: 15px;">';
+            html += '<div class="function-parent">';
+            html += '<input type="checkbox" name="function_ids" value="' + func.id + '" title="' + func.name + '" lay-skin="primary" id="func_' + func.id + '" ' + (checked ? 'checked' : '') + '>';
+            html += '</div>';
+
+            if (func.children && func.children.length > 0) {
+                html += '<div class="function-children" style="margin-left: 30px; margin-top: 10px;">';
+                for (var j = 0; j < func.children.length; j++) {
+                    var child = func.children[j];
+                    var childChecked = isFunctionChecked(child.id);
+                    html += '<input type="checkbox" name="function_ids" value="' + child.id + '" title="' + child.name + '" lay-skin="primary" id="func_' + child.id + '" ' + (childChecked ? 'checked' : '') + '>';
+                }
+                html += '</div>';
+            }
+
+            html += '</div>';
+        }
+
+        html += '</div></div>';
+        $('#permissionTree').html(html);
+        form.render('checkbox');
+    }
+
+    function isFunctionChecked(functionId) {
+        for (var i = 0; i < currentPermissions.length; i++) {
+            if (currentPermissions[i].id === functionId) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function loadPermissions(roleId) {
+        if (!roleId) {
+            layer.msg('请选择角色', {icon: 3});
+            return;
+        }
+
+        $.get('/admin/permission/api?role_id=' + roleId, function(res) {
+            if (res.code === 0) {
+                currentPermissions = res.data;
+                renderPermissionTree();
+            } else {
+                layer.msg(res.msg, {icon: 2});
+            }
+        });
+    }
+
+    $('#loadBtn').on('click', function() {
+        var roleId = $('#roleSelect').val();
+        if (!roleId) {
+            layer.msg('请选择角色', {icon: 3});
+            return;
+        }
+        loadPermissions(roleId);
+    });
+
+    form.on('select(roleSelect)', function(data) {
+        var roleId = data.value;
+        if (roleId) {
+            loadPermissions(roleId);
+        }
+    });
+
+    $('#saveBtn').on('click', function() {
+        var roleId = $('#roleSelect').val();
+        if (!roleId) {
+            layer.msg('请选择角色', {icon: 3});
+            return;
+        }
+
+        var roleName = $('#roleSelect option:selected').text();
+        if (roleName.indexOf('超级管理�?) !== -1) {
+            layer.msg('超级管理员拥有所有权限，无需设置', {icon: 2});
+            return;
+        }
+
+        var functionIds = [];
+        $('input[name="function_ids"]:checked').each(function() {
+            functionIds.push($(this).val());
+        });
+
+        layer.load(2, {shade: [0.3, '#000']});
+
+        $.post('/admin/permission/api', {
+            role_id: roleId,
+            function_ids: functionIds
+        }, function(res) {
+            layer.closeAll('loading');
+            if (res.code === 0) {
+                layer.msg(res.msg, {icon: 1});
+            } else {
+                layer.msg(res.msg, {icon: 2});
+            }
+        }).fail(function() {
+            layer.closeAll('loading');
+            layer.msg('网络请求失败', {icon: 2});
+        });
+    });
+
+    form.on('checkbox', function(data) {
+        var checked = data.elem.checked;
+        var value = parseInt(data.elem.value);
+
+        if (checked) {
+            var parentId = 0;
+            for (var i = 0; i < functions.length; i++) {
+                if (functions[i].id === value) {
+                    parentId = functions[i].parent_id;
+                    break;
+                }
+            }
+
+            if (parentId === 0) {
+                $('input[name="function_ids"][value="' + value + '"]').prop('checked', true);
+                form.render('checkbox');
+            } else {
+                $('input[name="function_ids"][value="' + parentId + '"]').prop('checked', true);
+                form.render('checkbox');
+            }
+        }
+    });
+
+    renderPermissionTree();
+    form.render();
+});
+</script>
+
+<style>
+.permission-tree {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.function-parent {
+    margin-bottom: 5px;
+}
+
+.function-children label {
+    display: inline-block;
+    margin-right: 15px;
+    margin-bottom: 5px;
+}
+</style>
+{% end %}

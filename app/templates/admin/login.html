@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理员登录 - cnAgentOS</title>
+    <link rel="stylesheet" href="/static/dist/layui/layui-v2.13.6/layui/css/layui.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        
+        .login-container {
+            width: 100%;
+            max-width: 420px;
+            padding: 20px;
+        }
+        
+        .login-box {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            animation: slideUp 0.4s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .login-header {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .login-header h1 {
+            color: #fff;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .login-header p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+        }
+        
+        .login-body {
+            padding: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .form-group .layui-input {
+            height: 48px;
+            border-radius: 8px;
+            border: 1px solid #e8e8e8;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group .layui-input:focus {
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+        
+        .login-btn {
+            width: 100%;
+            height: 48px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: none;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+        }
+        
+        .login-btn:active {
+            transform: translateY(0);
+        }
+        
+        .login-tips {
+            text-align: center;
+            margin-top: 20px;
+            color: #999;
+            font-size: 13px;
+        }
+        
+        .login-tips code {
+            background: #f5f5f5;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .layui-icon {
+            font-size: 16px;
+        }
+        
+        .captcha-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .captcha-group .layui-input {
+            flex: 1;
+        }
+        
+        .captcha-img {
+            width: 100px;
+            height: 48px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 1px solid #e8e8e8;
+        }
+        
+        /* 响应式适配 */
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 15px;
+            }
+            
+            .login-box {
+                border-radius: 12px;
+            }
+            
+            .login-header {
+                padding: 20px;
+            }
+            
+            .login-header h1 {
+                font-size: 20px;
+            }
+            
+            .login-body {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <h1><i class="layui-icon layui-icon-user-circle" style="margin-right: 8px;"></i>系统管理后台</h1>
+                <p>cnAgentOS AI智能瞭望与智能问数系统</p>
+            </div>
+            <div class="login-body">
+                <form class="layui-form" id="loginForm">
+                    <div class="form-group">
+                        <label><i class="layui-icon layui-icon-username" style="color: #10b981;"></i> 用户名</label>
+                        <input type="text" name="username" lay-verify="required" placeholder="请输入用户名" class="layui-input">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="layui-icon layui-icon-password" style="color: #10b981;"></i> 密码</label>
+                        <input type="password" name="password" lay-verify="required" placeholder="请输入密码" class="layui-input">
+                    </div>
+                    <button type="submit" class="login-btn" lay-submit lay-filter="login">
+                        <i class="layui-icon layui-icon-login" style="margin-right: 8px;"></i>登 录
+                    </button>
+                </form>
+                <div class="login-tips">
+                    <p>默认账户：<code>admin</code> / <code>admin888</code></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/static/dist/layui/layui-v2.13.6/layui/layui.js"></script>
+    <script>
+        layui.use(['form', 'layer'], function() {
+            var form = layui.form;
+            var layer = layui.layer;
+            
+            // 监听登录表单提交
+            form.on('submit(login)', function(data) {
+                var loading = layer.load(2, {shade: [0.3, '#000']});
+                
+                fetch('/admin/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams(data.field)
+                })
+                .then(response => response.json())
+                .then(result => {
+                    layer.close(loading);
+                    if (result.code === 0) {
+                        layer.msg(result.msg, {icon: 1, time: 1500}, function() {
+                            window.location.href = result.data.redirect;
+                        });
+                    } else {
+                        layer.msg(result.msg, {icon: 2});
+                    }
+                })
+                .catch(error => {
+                    layer.close(loading);
+                    layer.msg('网络请求失败', {icon: 2});
+                });
+                
+                return false;
+            });
+        });
+    </script>
+</body>
+</html>

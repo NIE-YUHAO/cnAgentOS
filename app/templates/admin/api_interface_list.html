@@ -1,0 +1,460 @@
+{% extends "layout.html" %}
+
+{% block title %}接口管理{% end %}
+
+{% block page_title %}系统管理 - 接口管理{% end %}
+
+{% block content %}
+<div class="api-container">
+    <div class="api-header">
+        <div class="header-left">
+            <h2><i class="layui-icon layui-icon-release" style="margin-right: 10px; font-size: 24px;"></i>API接口管理</h2>
+            <p class="subtitle">集中管理互联网API接口，为系统其他模块提供接口服务</p>
+        </div>
+        <div class="header-right">
+            <button class="layui-btn" id="addBtn">
+                <i class="layui-icon layui-icon-add-circle"></i> 新增接口
+            </button>
+        </div>
+    </div>
+
+    <div class="search-bar">
+        <input type="text" id="keyword" placeholder="搜索接口名称、编码或URL..." class="search-input">
+        <select id="categorySelect" class="search-select">
+            <option value="">全部分类</option>
+        </select>
+        <button class="layui-btn" id="doSearch">
+            <i class="layui-icon layui-icon-search"></i> 查询
+        </button>
+        <button class="layui-btn layui-btn-primary" id="resetSearch">
+            <i class="layui-icon layui-icon-refresh"></i> 重置
+        </button>
+    </div>
+
+    <table class="layui-hide" id="apiTable" lay-filter="apiTable"></table>
+</div>
+
+<div id="apiModal" style="display: none;">
+    <form class="layui-form" id="apiForm" lay-filter="apiForm" style="padding: 20px;">
+        <input type="hidden" name="id">
+        <div class="layui-form-item">
+            <label class="layui-form-label">接口名称</label>
+            <div class="layui-input-block">
+                <input type="text" name="name" lay-verify="required" placeholder="请输入接口名称" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">接口编码</label>
+            <div class="layui-input-block">
+                <input type="text" name="code" lay-verify="required" placeholder="请输入唯一编码" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">接口地址</label>
+            <div class="layui-input-block">
+                <input type="text" name="api_url" lay-verify="required" placeholder="请输入API地址" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">请求方式</label>
+            <div class="layui-input-block">
+                <select name="request_method" lay-verify="required">
+                    <option value="GET">GET</option>
+                    <option value="POST">POST</option>
+                    <option value="PUT">PUT</option>
+                    <option value="DELETE">DELETE</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">返回格式</label>
+            <div class="layui-input-block">
+                <select name="response_format">
+                    <option value="JSON">JSON</option>
+                    <option value="XML">XML</option>
+                    <option value="HTML">HTML</option>
+                    <option value="TEXT">TEXT</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">接口分类</label>
+            <div class="layui-input-block">
+                <input type="text" name="category" placeholder="如：music、weather、news等" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item layui-form-text">
+            <label class="layui-form-label">参数说明</label>
+            <div class="layui-input-block">
+                <textarea name="parameters" placeholder="JSON数组格式，如：[&#123;&quot;name&quot;:&quot;city&quot;,&quot;type&quot;:&quot;string&quot;,&quot;required&quot;:true,&quot;description&quot;:&quot;城市名称&quot;&#125;]" class="layui-textarea" rows="4"></textarea>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">请求示例</label>
+            <div class="layui-input-block">
+                <input type="text" name="example" placeholder="请输入完整请求示例URL" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">QPS限制</label>
+            <div class="layui-input-block">
+                <input type="number" name="qps_limit" value="4" placeholder="每2秒最多请求次数" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">Token验证</label>
+            <div class="layui-input-block">
+                <input type="checkbox" name="token_required" value="1" lay-skin="switch" lay-text="需要|不需要">
+            </div>
+        </div>
+        <div class="layui-form-item layui-form-text">
+            <label class="layui-form-label">描述说明</label>
+            <div class="layui-input-block">
+                <textarea name="description" placeholder="请输入接口描述" class="layui-textarea" rows="2"></textarea>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">状态</label>
+            <div class="layui-input-block">
+                <input type="radio" name="status" value="1" title="启用" checked>
+                <input type="radio" name="status" value="0" title="禁用">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button type="submit" class="layui-btn" lay-submit lay-filter="apiSubmit">提交</button>
+                <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script type="text/html" id="toolbarDemo">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="getCheckData">批量删除</button>
+    </div>
+</script>
+
+<script type="text/html" id="methodTpl">
+    &#123;&#123;#" &#125;&#125;  if(d.request_method === 'GET'){ &#125;&#125;
+    <span class="layui-badge layui-bg-green">GET</span>
+    &#123;&#123;#" &#125;&#125;  } else if(d.request_method === 'POST'){ &#125;&#125;
+    <span class="layui-badge layui-bg-blue">POST</span>
+    &#123;&#123;#" &#125;&#125;  } else if(d.request_method === 'PUT'){ &#125;&#125;
+    <span class="layui-badge layui-bg-orange">PUT</span>
+    &#123;&#123;#" &#125;&#125;  } else if(d.request_method === 'DELETE'){ &#125;&#125;
+    <span class="layui-badge layui-bg-red">DELETE</span>
+    &#123;&#123;#" &#125;&#125;  } else { &#125;&#125;
+    <span class="layui-badge">&#123;&#123;" &#125;&#125; d.request_method &#123;&#123; "&#125;&#125;</span>
+    &#123;&#123;#" &#125;&#125;  } &#125;&#125;
+</script>
+
+<script type="text/html" id="formatTpl">
+    <span class="layui-badge layui-bg-gray">&#123;&#123;" &#125;&#125; d.response_format &#123;&#123; "&#125;&#125;</span>
+</script>
+
+<script type="text/html" id="categoryTpl">
+    &#123;&#123;#" &#125;&#125;  if(d.category){ &#125;&#125;
+    <span class="layui-badge layui-bg-cyan">&#123;&#123;" &#125;&#125; d.category &#123;&#123; "&#125;&#125;</span>
+    &#123;&#123;#" &#125;&#125;  } else { &#125;&#125;
+    <span class="layui-badge layui-bg-gray">其他</span>
+    &#123;&#123;#" &#125;&#125;  } &#125;&#125;
+</script>
+
+<script type="text/html" id="statusTpl">
+    &#123;&#123;#" &#125;&#125;  if(d.status === 1){ &#125;&#125;
+    <span class="layui-badge layui-bg-green">启用</span>
+    &#123;&#123;#" &#125;&#125;  } else { &#125;&#125;
+    <span class="layui-badge layui-bg-gray">禁用</span>
+    &#123;&#123;#" &#125;&#125;  } &#125;&#125;
+</script>
+
+<script type="text/html" id="tokenTpl">
+    &#123;&#123;#" &#125;&#125;  if(d.token_required === 1){ &#125;&#125;
+    <span class="layui-badge layui-bg-orange">需要</span>
+    &#123;&#123;#" &#125;&#125;  } else { &#125;&#125;
+    <span class="layui-badge layui-bg-gray">不需要</span>
+    &#123;&#123;#" &#125;&#125;  } &#125;&#125;
+</script>
+
+<script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-xs" lay-event="edit">
+        <i class="layui-icon layui-icon-edit"></i> 编辑
+    </a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">
+        <i class="layui-icon layui-icon-delete"></i> 删除
+    </a>
+    <a class="layui-btn layui-btn-normal layui-btn-xs" lay-event="test">
+        <i class="layui-icon layui-icon-release"></i> 测试
+    </a>
+</script>
+
+<style>
+.api-container {
+    padding: 20px;
+}
+
+.api-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    color: #fff;
+}
+
+.api-header h2 {
+    margin: 0;
+    color: #fff;
+}
+
+.api-header .subtitle {
+    margin: 5px 0 0 0;
+    opacity: 0.9;
+}
+
+.search-bar {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    display: flex;
+    gap: 10px;
+}
+
+.search-input {
+    width: 250px;
+}
+
+.search-select {
+    width: 150px;
+}
+
+.layui-table-view {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+</style>
+
+{% end %}
+
+{% block script %}
+<script>
+var categories = {{ categories_json }};
+
+layui.use(['table', 'form', 'layer'], function() {
+    var table = layui.table;
+    var form = layui.form;
+    var layer = layui.layer;
+
+    if (typeof categories === 'string') {
+        try {
+            categories = JSON.parse(categories);
+        } catch(e) {
+            categories = [];
+        }
+    }
+
+    var categorySelect = $('#categorySelect');
+    categorySelect.empty();
+    categorySelect.append('<option value="">全部分类</option>');
+    if (categories && categories.length > 0) {
+        categories.forEach(function(cat) {
+            categorySelect.append('<option value="' + cat + '">' + cat + '</option>');
+        });
+    }
+    form.render('select');
+
+    var tableIns = table.render({
+        elem: '#apiTable',
+        url: '/admin/api_interface/api',
+        method: 'get',
+        toolbar: '#toolbarDemo',
+        defaultToolbar: ['filter', 'exports', 'print'],
+        page: true,
+        limits: [10, 20, 50, 100],
+        limit: 10,
+        cols: [[
+            {type: 'checkbox', fixed: 'left'},
+            {field: 'id', title: 'ID', width: 80, sort: true, fixed: 'left'},
+            {field: 'name', title: '接口名称', width: 150, fixed: 'left'},
+            {field: 'code', title: '编码', width: 150},
+            {field: 'request_method', title: '方法', width: 100, templet: '#methodTpl'},
+            {field: 'response_format', title: '格式', width: 100, templet: '#formatTpl'},
+            {field: 'category', title: '分类', width: 100, templet: '#categoryTpl'},
+            {field: 'api_url', title: '接口地址', minWidth: 200},
+            {field: 'qps_limit', title: 'QPS', width: 80},
+            {field: 'token_required', title: 'Token', width: 100, templet: '#tokenTpl'},
+            {field: 'status', title: '状态', width: 100, templet: '#statusTpl'},
+            {fixed: 'right', title: '操作', width: 220, align: 'center', toolbar: '#barDemo'}
+        ]],
+        parseData: function(res) {
+            return {
+                "code": res.code,
+                "msg": res.msg,
+                "count": res.count,
+                "data": res.data
+            };
+        }
+    });
+
+    table.on('tool(apiTable)', function(obj) {
+        var data = obj.data;
+        if(obj.event === 'del') {
+            layer.confirm('确定删除该接口吗？', function(index) {
+                $.ajax({
+                    url: '/admin/api_interface/api',
+                    type: 'DELETE',
+                    data: { id: data.id },
+                    success: function(res) {
+                        if(res.code === 0) {
+                            layer.msg('删除成功', {icon: 1});
+                            obj.del();
+                        } else {
+                            layer.msg(res.msg, {icon: 2});
+                        }
+                    }
+                });
+                layer.close(index);
+            });
+        } else if(obj.event === 'edit') {
+            openModal(data);
+        } else if(obj.event === 'test') {
+            testApi(data);
+        }
+    });
+
+    table.on('toolbar(apiTable)', function(obj) {
+        var checkStatus = table.checkStatus('apiTable');
+        var data = checkStatus.data;
+        if(obj.event === 'getCheckData') {
+            if(data.length === 0) {
+                layer.msg('请选择要删除的接口', {icon: 0});
+                return;
+            }
+            var ids = data.map(function(item) { return item.id; });
+            layer.confirm('确定删除选中的 ' + ids.length + ' 个接口吗？', function(index) {
+                var count = 0;
+                ids.forEach(function(id) {
+                    $.ajax({
+                        url: '/admin/api_interface/api',
+                        type: 'DELETE',
+                        data: { id: id },
+                        async: false,
+                        success: function(res) {
+                            if(res.code === 0) count++;
+                        }
+                    });
+                });
+                layer.msg('成功删除 ' + count + ' 个接口', {icon: 1});
+                tableIns.reload();
+                layer.close(index);
+            });
+        }
+    });
+
+    $('#addBtn').on('click', function() {
+        openModal(null);
+    });
+
+    $('#doSearch').on('click', function() {
+        var keyword = $('#keyword').val();
+        var category = $('#categorySelect').val();
+        tableIns.reload({
+            where: { keyword: keyword, category: category },
+            page: { curr: 1 }
+        });
+    });
+
+    $('#resetSearch').on('click', function() {
+        $('#keyword').val('');
+        $('#categorySelect').val('');
+        form.render('select');
+        tableIns.reload({
+            where: { keyword: '', category: '' },
+            page: { curr: 1 }
+        });
+    });
+
+    function openModal(data) {
+        var title = data ? '编辑接口' : '新增接口';
+        var formData = data ? {
+            'id': data.id,
+            'name': data.name,
+            'code': data.code,
+            'api_url': data.api_url,
+            'request_method': data.request_method,
+            'response_format': data.response_format,
+            'description': data.description,
+            'parameters': data.parameters,
+            'example': data.example,
+            'qps_limit': data.qps_limit,
+            'token_required': data.token_required,
+            'category': data.category,
+            'status': data.status
+        } : {};
+
+        layer.open({
+            type: 1,
+            title: title,
+            content: $('#apiModal'),
+            area: ['700px', '650px'],
+            btn: ['提交', '取消'],
+            success: function() {
+                form.val('apiForm', formData);
+                if (!data) {
+                    $('#apiForm')[0].reset();
+                    formData.status = 1;
+                    form.val('apiForm', formData);
+                }
+            },
+            yes: function(index, layero) {
+                var formData = form.val('apiForm');
+                formData.token_required = formData.token_required ? 1 : 0;
+                var url = data ? '/admin/api_interface/api' : '/admin/api_interface/api';
+                var type = data ? 'PUT' : 'POST';
+
+                $.ajax({
+                    url: url,
+                    type: type,
+                    data: formData,
+                    success: function(res) {
+                        if(res.code === 0) {
+                            layer.msg(title + '成功', {icon: 1});
+                            tableIns.reload();
+                            layer.close(index);
+                            location.reload();
+                        } else {
+                            layer.msg(res.msg, {icon: 2});
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    function testApi(data) {
+        var exampleUrl = data.example || data.api_url;
+        layer.open({
+            type: 1,
+            title: '测试接口 - ' + data.name,
+            content: '<div style="padding: 20px;"><p>接口地址：' + exampleUrl + '</p><p>请求方法：' + data.request_method + '</p><p>返回格式：' + data.response_format + '</p><p class="layui-text">描述：' + (data.description || '无') + '</p></div>',
+            area: ['600px', '400px'],
+            btn: ['在浏览器中打开', '关闭'],
+            yes: function(index, layero) {
+                window.open(exampleUrl, '_blank');
+                layer.close(index);
+            }
+        });
+    }
+
+    form.on('submit(apiSubmit)', function(data) {
+        return false;
+    });
+});
+</script>
+{% end %}

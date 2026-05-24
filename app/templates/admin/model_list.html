@@ -1,0 +1,598 @@
+{% extends "layout.html" %}
+
+{% block title %}模型管理{% end %}
+
+{% block page_title %}模型引擎 - 模型管理{% end %}
+
+{% block content %}
+<div class="model-container">
+    <div class="model-header">
+        <div class="header-left">
+            <h2><i class="layui-icon layui-icon-server" style="margin-right: 10px; font-size: 24px;"></i>模型服务管理</h2>
+            <p class="subtitle">管理您的AI模型服务，支持OpenAI API范式接入</p>
+        </div>
+        <div class="header-right">
+            <button class="layui-btn layui-btn-primary" id="searchBtn">
+                <i class="layui-icon layui-icon-search"></i> 搜索
+            </button>
+            <button class="layui-btn" id="addBtn">
+                <i class="layui-icon layui-icon-add-circle"></i> 新增模型
+            </button>
+        </div>
+    </div>
+
+    <div class="search-bar">
+        <input type="text" id="keyword" placeholder="搜索模型名称或编码..." class="search-input">
+        <button class="layui-btn" id="doSearch">
+            <i class="layui-icon layui-icon-search"></i> 查询
+        </button>
+        <button class="layui-btn layui-btn-primary" id="resetSearch">
+            <i class="layui-icon layui-icon-refresh"></i> 重置
+        </button>
+    </div>
+
+    <div class="model-grid" id="modelGrid">
+        <div class="loading" id="loading">
+            <div class="loading-spinner"></div>
+            <p>加载中...</p>
+        </div>
+    </div>
+
+    <div id="pagination" class="pagination"></div>
+</div>
+
+<div id="modelModal" style="display: none;">
+    <form class="layui-form" id="modelForm" lay-filter="modelForm">
+        <input type="hidden" name="id">
+        <div class="layui-form-item">
+            <label class="layui-form-label">模型名称</label>
+            <div class="layui-input-block">
+                <input type="text" name="name" lay-verify="required" placeholder="请输入模型名称" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">模型编码</label>
+            <div class="layui-input-block">
+                <input type="text" name="code" lay-verify="required" placeholder="唯一标识，如 gpt-4" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">API类型</label>
+            <div class="layui-input-block">
+                <select name="api_type" lay-verify="required">
+                    <option value="openai">OpenAI API</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">API基础地址</label>
+            <div class="layui-input-block">
+                <input type="text" name="api_base" placeholder="如 https://api.openai.com/v1" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">API密钥</label>
+            <div class="layui-input-block">
+                <input type="text" name="api_key" placeholder="sk-xxx..." class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">模型名称</label>
+            <div class="layui-input-block">
+                <input type="text" name="model_name" placeholder="如 gpt-4o" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">最大Token</label>
+            <div class="layui-input-block">
+                <input type="number" name="max_tokens" value="4096" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">温度</label>
+            <div class="layui-input-block">
+                <input type="number" step="0.1" name="temperature" value="0.7" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">Top P</label>
+            <div class="layui-input-block">
+                <input type="number" step="0.1" name="top_p" value="1.0" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">描述</label>
+            <div class="layui-input-block">
+                <textarea name="description" placeholder="模型描述信息" class="layui-textarea"></textarea>
+            </div>
+        </div>
+        <div class="layui-form-item" id="statusItem">
+            <label class="layui-form-label">状态</label>
+            <div class="layui-input-block">
+                <input type="radio" name="status" value="1" title="启用" checked>
+                <input type="radio" name="status" value="0" title="禁用">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button type="submit" class="layui-btn" lay-submit lay-filter="submitForm">确认提交</button>
+                <button type="button" class="layui-btn layui-btn-primary" id="closeModal">取消</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<style>
+.model-container {
+    padding: 20px;
+}
+
+.model-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 20px;
+    background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+    border-radius: 12px;
+    color: #fff;
+}
+
+.header-left h2 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.subtitle {
+    margin: 5px 0 0 0;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 14px;
+}
+
+.search-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.search-input {
+    flex: 1;
+    max-width: 400px;
+    border-radius: 6px;
+}
+
+.model-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.model-card {
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.model-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.model-card.default {
+    border-color: #10b981;
+    background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+}
+
+.model-card.disabled {
+    opacity: 0.6;
+}
+
+.card-header {
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    position: relative;
+}
+
+.card-header .default-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #10b981;
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+}
+
+.card-header h3 {
+    margin: 0;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.card-header .code {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 13px;
+    margin-top: 5px;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+.card-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.card-row:last-child {
+    border-bottom: none;
+}
+
+.card-row label {
+    color: #666;
+    font-size: 13px;
+}
+
+.card-row value {
+    color: #333;
+    font-weight: 500;
+    font-size: 13px;
+}
+
+.card-footer {
+    padding: 15px 20px;
+    background: #f8f9fa;
+    display: flex;
+    gap: 10px;
+}
+
+.card-footer .layui-btn {
+    flex: 1;
+    font-size: 12px;
+}
+
+.loading {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 50px;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 15px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.pagination {
+    text-align: center;
+    margin-top: 30px;
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-badge.active {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-badge.disabled {
+    background: #f5f5f5;
+    color: #999;
+}
+
+@media (max-width: 1024px) {
+    .model-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .model-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% end %}
+
+{% block script %}
+<script>
+layui.use(['layer', 'form'], function() {
+    var layer = layui.layer;
+    var form = layui.form;
+
+    var currentPage = 1;
+    var pageSize = 6;
+    var totalPages = 1;
+
+    function loadModels(page) {
+        var keyword = $('#keyword').val();
+        $('#loading').show();
+        $('#modelGrid').html('<div class="loading" id="loading"><div class="loading-spinner"></div><p>加载中...</p></div>');
+
+        fetch(`/admin/model/api?page=${page}&limit=${pageSize}&keyword=${keyword}`)
+        .then(response => response.json())
+        .then(result => {
+            $('#loading').hide();
+            
+            if (result.code === 0) {
+                renderModels(result.data);
+                totalPages = Math.ceil(result.count / pageSize);
+                renderPagination(result.count);
+            }
+        });
+    }
+
+    function renderModels(models) {
+        if (models.length === 0) {
+            $('#modelGrid').html('<div style="grid-column: 1/-1; text-align: center; padding: 50px; color: #999;">暂无模型数据</div>');
+            return;
+        }
+
+        var html = '';
+        models.forEach(function(model) {
+            var isDefault = model.is_default === 1;
+            var isDisabled = model.status !== 1;
+            
+            html += `
+                <div class="model-card ${isDefault ? 'default' : ''} ${isDisabled ? 'disabled' : ''}">
+                    <div class="card-header">
+                        ${isDefault ? '<span class="default-badge">默认</span>' : ''}
+                        <h3><i class="layui-icon layui-icon-brain" style="margin-right: 8px;"></i>${model.name}</h3>
+                        <div class="code">${model.code}</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-row">
+                            <label>模型</label>
+                            <value>${model.model_name || '-'}</value>
+                        </div>
+                        <div class="card-row">
+                            <label>API地址</label>
+                            <value style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${model.api_base || '-'}</value>
+                        </div>
+                        <div class="card-row">
+                            <label>最大Token</label>
+                            <value>${model.max_tokens}</value>
+                        </div>
+                        <div class="card-row">
+                            <label>温度</label>
+                            <value>${model.temperature}</value>
+                        </div>
+                        <div class="card-row">
+                            <label>状态</label>
+                            <value><span class="status-badge ${isDisabled ? 'disabled' : 'active'}">${isDisabled ? '禁用' : '启用'}</span></value>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button class="layui-btn layui-btn-xs" onclick="editModel(${model.id})">
+                            <i class="layui-icon layui-icon-edit"></i> 编辑
+                        </button>
+                        <button class="layui-btn layui-btn-xs layui-btn-normal" onclick="testModel(${model.id})">
+                            <i class="layui-icon layui-icon-message-circle"></i> 测试
+                        </button>
+                        ${!isDefault ? `<button class="layui-btn layui-btn-xs layui-btn-primary" onclick="setDefault(${model.id})">设为默认</button>` : ''}
+                        ${!isDefault ? `<button class="layui-btn layui-btn-xs layui-btn-danger" onclick="deleteModel(${model.id})">删除</button>` : ''}
+                    </div>
+                </div>
+            `;
+        });
+
+        $('#modelGrid').html(html);
+    }
+
+    function renderPagination(count) {
+        if (count <= pageSize) {
+            $('#pagination').html('');
+            return;
+        }
+
+        var html = '<div class="layui-box layui-laypage layui-laypage-default">';
+        
+        if (currentPage > 1) {
+            html += `<a href="javascript:loadModels(${currentPage - 1})" class="layui-laypage-prev">上一页</a>`;
+        }
+
+        for (var i = 1; i <= totalPages; i++) {
+            if (i === currentPage) {
+                html += `<span class="layui-laypage-curr"><em>${i}</em></span>`;
+            } else {
+                html += `<a href="javascript:loadModels(${i})">${i}</a>`;
+            }
+        }
+
+        if (currentPage < totalPages) {
+            html += `<a href="javascript:loadModels(${currentPage + 1})" class="layui-laypage-next">下一页</a>`;
+        }
+
+        html += '</div>';
+        $('#pagination').html(html);
+    }
+
+    function openModal(data) {
+        layer.open({
+            type: 1,
+            title: data ? '编辑模型' : '新增模型',
+            content: $('#modelModal'),
+            area: ['600px', '700px'],
+            success: function() {
+                form.val('modelForm', {
+                    'id': '',
+                    'name': '',
+                    'code': '',
+                    'api_type': 'openai',
+                    'api_base': '',
+                    'api_key': '',
+                    'model_name': '',
+                    'max_tokens': 4096,
+                    'temperature': 0.7,
+                    'top_p': 1.0,
+                    'description': '',
+                    'status': '1'
+                });
+
+                if (data) {
+                    form.val('modelForm', {
+                        'id': data.id,
+                        'name': data.name,
+                        'code': data.code,
+                        'api_type': data.api_type,
+                        'api_base': data.api_base,
+                        'api_key': data.api_key,
+                        'model_name': data.model_name,
+                        'max_tokens': data.max_tokens,
+                        'temperature': data.temperature,
+                        'top_p': data.top_p,
+                        'description': data.description,
+                        'status': String(data.status)
+                    });
+                    $('input[name="code"]').attr('disabled', true);
+                } else {
+                    $('input[name="code"]').attr('disabled', false);
+                }
+
+                form.render();
+            }
+        });
+    }
+
+    window.editModel = function(id) {
+        fetch(`/admin/model/api?page=1&limit=100`)
+        .then(response => response.json())
+        .then(result => {
+            if (result.code === 0) {
+                var model = result.data.find(m => m.id === id);
+                if (model) {
+                    openModal(model);
+                }
+            }
+        });
+    };
+
+    window.testModel = function(id) {
+        window.location.href = `/admin/model/test?model_id=${id}`;
+    };
+
+    window.setDefault = function(id) {
+        layer.confirm('确定要将此模型设为默认模型吗？', {icon: 3}, function(index) {
+            layer.close(index);
+            layer.load(2);
+            
+            fetch('/admin/model/set_default', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: `model_id=${id}`
+            })
+            .then(response => response.json())
+            .then(result => {
+                layer.closeAll('loading');
+                if (result.code === 0) {
+                    layer.msg(result.msg, {icon: 1});
+                    loadModels(currentPage);
+                } else {
+                    layer.msg(result.msg, {icon: 2});
+                }
+            });
+        });
+    };
+
+    window.deleteModel = function(id) {
+        layer.confirm('确定要删除此模型吗？', {icon: 3}, function(index) {
+            layer.close(index);
+            layer.load(2);
+            
+            fetch(`/admin/model/api?id=${id}`, {method: 'DELETE'})
+            .then(response => response.json())
+            .then(result => {
+                layer.closeAll('loading');
+                if (result.code === 0) {
+                    layer.msg(result.msg, {icon: 1});
+                    loadModels(currentPage);
+                } else {
+                    layer.msg(result.msg, {icon: 2});
+                }
+            });
+        });
+    };
+
+    $('#addBtn').on('click', function() {
+        openModal();
+    });
+
+    $('#doSearch').on('click', function() {
+        currentPage = 1;
+        loadModels(1);
+    });
+
+    $('#resetSearch').on('click', function() {
+        $('#keyword').val('');
+        currentPage = 1;
+        loadModels(1);
+    });
+
+    $('#keyword').on('keyup', function(e) {
+        if (e.keyCode === 13) {
+            currentPage = 1;
+            loadModels(1);
+        }
+    });
+
+    $('#closeModal').on('click', function() {
+        layer.closeAll('page');
+    });
+
+    form.on('submit(submitForm)', function(data) {
+        var url = '/admin/model/api';
+        var method = data.field.id ? 'PUT' : 'POST';
+
+        layer.load(2);
+
+        fetch(url, {
+            method: method,
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: new URLSearchParams(data.field)
+        })
+        .then(response => response.json())
+        .then(result => {
+            layer.closeAll('loading');
+            if (result.code === 0) {
+                layer.msg(result.msg, {icon: 1}, function() {
+                    layer.closeAll('page');
+                    loadModels(currentPage);
+                });
+            } else {
+                layer.msg(result.msg, {icon: 2});
+            }
+        });
+
+        return false;
+    });
+
+    loadModels(1);
+});
+</script>
+{% end %}

@@ -1,0 +1,403 @@
+{% extends "layout.html" %}
+
+{% block title %}数字员工管理{% end %}
+
+{% block page_title %}数字员工 - 员工管理{% end %}
+
+{% block content %}
+<div class="worker-container">
+    <div class="worker-header">
+        <div class="header-left">
+            <h2><i class="layui-icon layui-icon-robot" style="margin-right: 10px; font-size: 24px;"></i>数字员工管理</h2>
+            <p class="subtitle">管理AI智能对话与API服务数字员工，用户通过@别名调用对应服务</p>
+        </div>
+        <div class="header-right">
+            <button class="layui-btn" id="addBtn">
+                <i class="layui-icon layui-icon-add-circle"></i> 新增数字员工
+            </button>
+        </div>
+    </div>
+
+    <div class="search-bar">
+        <input type="text" id="keyword" placeholder="搜索名称、别名或描述..." class="search-input">
+        <select id="typeSelect" class="search-select">
+            <option value="">全部类别</option>
+            <option value="AI">AI</option>
+            <option value="普通">普通</option>
+        </select>
+        <button class="layui-btn" id="doSearch">
+            <i class="layui-icon layui-icon-search"></i> 查询
+        </button>
+        <button class="layui-btn layui-btn-primary" id="resetSearch">
+            <i class="layui-icon layui-icon-refresh"></i> 重置
+        </button>
+    </div>
+
+    <table class="layui-hide" id="workerTable" lay-filter="workerTable"></table>
+</div>
+
+<div id="workerModal" style="display: none;">
+    <form class="layui-form" id="workerForm" lay-filter="workerForm" style="padding: 20px;">
+        <input type="hidden" name="id">
+        <div class="layui-form-item">
+            <label class="layui-form-label">员工名称</label>
+            <div class="layui-input-block">
+                <input type="text" name="name" lay-verify="required" placeholder="请输入数字员工名称" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">调用别名</label>
+            <div class="layui-input-block">
+                <input type="text" name="alias" lay-verify="required" placeholder="用户通过@别名调用，如：川小农、天气、音乐" class="layui-input">
+                <div class="layui-form-mid layui-word-aux" style="margin-left: 0; padding-top: 5px;">用户通过 @别名 触发该数字员工，别名需唯一</div>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">员工类别</label>
+            <div class="layui-input-block">
+                <select name="worker_type" lay-verify="required" lay-filter="workerType" id="workerTypeSelect">
+                    <option value="">请选择类别</option>
+                    <option value="AI">AI - 基于大模型的智能对话</option>
+                    <option value="普通">普通 - 基于API接口的数据服务</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item layui-form-text">
+            <label class="layui-form-label">描述说明</label>
+            <div class="layui-input-block">
+                <textarea name="description" placeholder="请输入数字员工功能描述" class="layui-textarea" rows="2"></textarea>
+            </div>
+        </div>
+
+        <div id="aiConfigBlock" style="display: none;">
+            <div class="layui-form-item">
+                <label class="layui-form-label">关联模型</label>
+                <div class="layui-input-block">
+                    <select name="model_id" id="modelSelect" lay-filter="modelSelect">
+                        <option value="">请选择模型</option>
+                        {% for m in models %}
+                        <option value="{{ m['id'] }}">{{ m['name'] }}</option>
+                        {% end %}
+                    </select>
+                </div>
+            </div>
+            <div class="layui-form-item layui-form-text">
+                <label class="layui-form-label">提示词</label>
+                <div class="layui-input-block">
+                    <textarea name="prompt" id="promptInput" placeholder="请输入AI数字员工的系统提示词（Prompt），用于定义角色和行为" class="layui-textarea" rows="4"></textarea>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">响应模式</label>
+                <div class="layui-input-block">
+                    <input type="text" name="response_mode_display" value="SSE（流式响应）" class="layui-input" disabled>
+                    <input type="hidden" name="response_mode" value="sse">
+                </div>
+            </div>
+        </div>
+
+        <div id="apiConfigBlock" style="display: none;">
+            <div class="layui-form-item">
+                <label class="layui-form-label">关联API</label>
+                <div class="layui-input-block">
+                    <select name="api_interface_id" id="apiSelect" lay-filter="apiSelect">
+                        <option value="">请选择API接口</option>
+                        {% for a in api_interfaces %}
+                        <option value="{{ a['id'] }}">{{ a['name'] }}（{{ a['code'] }}）</option>
+                        {% end %}
+                    </select>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">响应模式</label>
+                <div class="layui-input-block">
+                    <input type="text" name="response_mode_display2" value="JSON（接口响应）" class="layui-input" disabled>
+                    <input type="hidden" name="response_mode" value="json">
+                </div>
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">设为默认</label>
+            <div class="layui-input-block">
+                <input type="checkbox" name="is_default" value="1" lay-skin="switch" lay-text="是|否">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">状态</label>
+            <div class="layui-input-block">
+                <input type="radio" name="status" value="1" title="启用" checked>
+                <input type="radio" name="status" value="0" title="禁用">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button type="submit" class="layui-btn" lay-submit lay-filter="workerSubmit">提交</button>
+                <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script type="text/html" id="barDemo">
+<a class="layui-btn layui-btn-xs" lay-event="edit">
+    <i class="layui-icon layui-icon-edit"></i> 编辑
+</a>
+<a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">
+    <i class="layui-icon layui-icon-delete"></i> 删除
+</a>
+</script>
+
+<style>
+.worker-container {
+    padding: 20px;
+}
+
+.worker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 20px;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    border-radius: 10px;
+    color: #fff;
+}
+
+.worker-header h2 {
+    margin: 0;
+    color: #fff;
+}
+
+.worker-header .subtitle {
+    margin: 5px 0 0 0;
+    opacity: 0.9;
+}
+
+.search-bar {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    display: flex;
+    gap: 10px;
+}
+
+.search-input {
+    width: 250px;
+}
+
+.search-select {
+    width: 150px;
+}
+
+.layui-table-view {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+</style>
+
+{% end %}
+
+{% block script %}
+<script>
+var modelsData = {{ models_json }};
+var apiInterfacesData = {{ api_interfaces_json }};
+
+function createTemplateScript(id, content) {
+    var script = document.createElement('script');
+    script.type = 'text/html';
+    script.id = id;
+    script.innerHTML = content;
+    document.body.appendChild(script);
+}
+
+createTemplateScript('typeTpl', '<% if(d.worker_type === "AI"){ %><span class="layui-badge layui-bg-blue">AI</span><% } else { %><span class="layui-badge layui-bg-cyan">普通</span><% } %>');
+createTemplateScript('statusTpl', '<% if(d.status === 1){ %><span class="layui-badge layui-bg-green">启用</span><% } else { %><span class="layui-badge layui-bg-gray">禁用</span><% } %>');
+createTemplateScript('defaultTpl', '<% if(d.is_default === 1){ %><span class="layui-badge layui-bg-orange">默认</span><% } else { %><span class="layui-badge layui-bg-gray">-</span><% } %>');
+createTemplateScript('aliasTpl', '<span style="color: #10b981; font-weight: 600;">@<%= d.alias %></span>');
+createTemplateScript('modelTpl', '<% if(d.model_name){ %><span class="layui-badge layui-bg-blue"><%= d.model_name %></span><% } else { %><span class="layui-badge layui-bg-gray">-</span><% } %>');
+createTemplateScript('apiTpl', '<% if(d.api_name){ %><span class="layui-badge layui-bg-cyan"><%= d.api_name %></span><% } else { %><span class="layui-badge layui-bg-gray">-</span><% } %>');
+
+layui.use(['table', 'form', 'layer'], function() {
+    var table = layui.table;
+    var form = layui.form;
+    var layer = layui.layer;
+
+    if (typeof modelsData === 'string') {
+        try { modelsData = JSON.parse(modelsData); } catch(e) { modelsData = []; }
+    }
+    if (typeof apiInterfacesData === 'string') {
+        try { apiInterfacesData = JSON.parse(apiInterfacesData); } catch(e) { apiInterfacesData = []; }
+    }
+
+    var tableIns = table.render({
+        elem: '#workerTable',
+        url: '/admin/digital_worker/api',
+        method: 'get',
+        defaultToolbar: ['filter', 'exports', 'print'],
+        page: true,
+        limits: [10, 20, 50, 100],
+        limit: 10,
+        cols: [[
+            {field: 'id', title: 'ID', width: 80, sort: true, fixed: 'left'},
+            {field: 'name', title: '员工名称', width: 130, fixed: 'left'},
+            {field: 'alias', title: '调用别名', width: 120, templet: '#aliasTpl'},
+            {field: 'worker_type', title: '类别', width: 100, templet: '#typeTpl'},
+            {field: 'description', title: '描述', minWidth: 200},
+            {field: 'model_name', title: '关联模型', width: 130, templet: '#modelTpl'},
+            {field: 'api_name', title: '关联API', width: 150, templet: '#apiTpl'},
+            {field: 'is_default', title: '默认', width: 80, templet: '#defaultTpl'},
+            {field: 'status', title: '状态', width: 100, templet: '#statusTpl'},
+            {fixed: 'right', title: '操作', width: 160, align: 'center', toolbar: '#barDemo'}
+        ]],
+        parseData: function(res) {
+            return {
+                "code": res.code,
+                "msg": res.msg,
+                "count": res.count,
+                "data": res.data
+            };
+        }
+    });
+
+    table.on('tool(workerTable)', function(obj) {
+        var data = obj.data;
+        if(obj.event === 'del') {
+            layer.confirm('确定删除数字员工"' + data.name + '"吗？', function(index) {
+                $.ajax({
+                    url: '/admin/digital_worker/api',
+                    type: 'DELETE',
+                    data: { id: data.id },
+                    success: function(res) {
+                        if(res.code === 0) {
+                            layer.msg('删除成功', {icon: 1});
+                            obj.del();
+                        } else {
+                            layer.msg(res.msg, {icon: 2});
+                        }
+                    }
+                });
+                layer.close(index);
+            });
+        } else if(obj.event === 'edit') {
+            openModal(data);
+        }
+    });
+
+    $('#addBtn').on('click', function() {
+        openModal(null);
+    });
+
+    $('#doSearch').on('click', function() {
+        var keyword = $('#keyword').val();
+        var worker_type = $('#typeSelect').val();
+        tableIns.reload({
+            where: { keyword: keyword, worker_type: worker_type },
+            page: { curr: 1 }
+        });
+    });
+
+    $('#resetSearch').on('click', function() {
+        $('#keyword').val('');
+        $('#typeSelect').val('');
+        form.render('select');
+        tableIns.reload({
+            where: { keyword: '', worker_type: '' },
+            page: { curr: 1 }
+        });
+    });
+
+    form.on('select(workerType)', function(data) {
+        toggleConfigBlock(data.value);
+    });
+
+    function toggleConfigBlock(workerType) {
+        if (workerType === 'AI') {
+            $('#aiConfigBlock').show();
+            $('#apiConfigBlock').hide();
+            $('input[name="response_mode"]').val('sse');
+        } else if (workerType === '普通') {
+            $('#aiConfigBlock').hide();
+            $('#apiConfigBlock').show();
+            $('input[name="response_mode"]').val('json');
+        } else {
+            $('#aiConfigBlock').hide();
+            $('#apiConfigBlock').hide();
+        }
+        form.render('select');
+    }
+
+    function openModal(data) {
+        var title = data ? '编辑数字员工' : '新增数字员工';
+
+        layer.open({
+            type: 1,
+            title: title,
+            content: $('#workerModal'),
+            area: ['700px', '700px'],
+            btn: ['提交', '取消'],
+            success: function() {
+                if (data) {
+                    form.val('workerForm', {
+                        'id': data.id,
+                        'name': data.name,
+                        'alias': data.alias,
+                        'worker_type': data.worker_type,
+                        'description': data.description,
+                        'model_id': data.model_id || '',
+                        'prompt': data.prompt || '',
+                        'api_interface_id': data.api_interface_id || '',
+                        'is_default': data.is_default,
+                        'status': data.status
+                    });
+                    toggleConfigBlock(data.worker_type);
+                } else {
+                    $('#workerForm')[0].reset();
+                    form.val('workerForm', {
+                        'id': '',
+                        'name': '',
+                        'alias': '',
+                        'worker_type': '',
+                        'description': '',
+                        'model_id': '',
+                        'prompt': '',
+                        'api_interface_id': '',
+                        'is_default': 0,
+                        'status': 1
+                    });
+                    toggleConfigBlock('');
+                }
+                form.render();
+            },
+            yes: function(index, layero) {
+                var formData = form.val('workerForm');
+                var url = '/admin/digital_worker/api';
+                var type = data ? 'PUT' : 'POST';
+
+                $.ajax({
+                    url: url,
+                    type: type,
+                    data: formData,
+                    success: function(res) {
+                        if(res.code === 0) {
+                            layer.msg(title + '成功', {icon: 1});
+                            tableIns.reload();
+                            layer.close(index);
+                        } else {
+                            layer.msg(res.msg, {icon: 2});
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    form.on('submit(workerSubmit)', function(data) {
+        return false;
+    });
+});
+</script>
+{% end %}

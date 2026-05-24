@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block title %}首页 - 后台管理系统{% end %}
+
+{% block content %}
+    <h1>欢迎回来，{{ username }}！</h1>
+    <p>这是后台首页，你已成功登录。</p>
+    <a href="/logout" class="logout-btn">退出登录</a>
+{% end %}
